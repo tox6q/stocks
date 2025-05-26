@@ -36,12 +36,12 @@ Testing
 
 
  Test API calls:
-[]Ensure current prices are fetched for valid tickers (e.g., AAPL, GOOGL).
-[]Check error handling for invalid tickers or API failures.
+[x]Ensure current prices are fetched for valid tickers (e.g., AAPL, GOOGL).
+[x]Check error handling for invalid tickers or API failures.
 
 
  Test UI:
-[]Confirm shadcn/ui table displays data correctly with Tailwind styling.
+[x]Confirm shadcn/ui table displays data correctly with Tailwind styling.
 []Verify file upload and error messages work as expected.
 
 Notes

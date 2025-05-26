@@ -19,6 +19,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import StockChart from "@/components/StockChart";
 import PortfolioTreemap from "@/components/PortfolioTreemap";
 
@@ -35,6 +42,8 @@ interface StockComparison extends StockData {
   profit_loss?: number;
   percent_change?: number;
   error?: string;
+  comparison_price?: number; // Price from selected period
+  comparison_market_value?: number; // Market value at comparison period
 }
 
 export default function Home() {
@@ -42,11 +51,12 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>("");
   const [selectedStock, setSelectedStock] = useState<string | null>(null);
+  const [comparisonPeriod, setComparisonPeriod] = useState<string>("csv");
 
-  // Function to fetch current stock price using our API route
-  const fetchStockPrice = async (ticker: string): Promise<number | null> => {
+  // Function to fetch stock comparison data based on selected period
+  const fetchStockComparison = async (ticker: string, period: string): Promise<{currentPrice: number, comparisonPrice: number | null} | null> => {
     try {
-      const response = await fetch(`/api/stock/${ticker}`);
+      const response = await fetch(`/api/stock/${ticker}/compare?period=${period}`);
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -58,36 +68,44 @@ export default function Home() {
         throw new Error(data.error);
       }
       
-      return data.currentPrice;
+      return {
+        currentPrice: data.currentPrice,
+        comparisonPrice: data.comparisonPrice
+      };
     } catch (error) {
-      console.error(`Error fetching price for ${ticker}:`, error);
+      console.error(`Error fetching comparison data for ${ticker}:`, error);
       return null;
     }
   };
 
-  // Function to fetch current prices for all stocks
-  const fetchCurrentPrices = async (stocksData: StockComparison[]) => {
+  // Function to fetch comparison data for all stocks
+  const fetchStockComparisons = async (stocksData: StockComparison[], period: string) => {
     const updatedStocks = [...stocksData];
     
     // Process stocks in parallel with a reasonable limit
     const promises = stocksData.map(async (stock, index) => {
-      const currentPrice = await fetchStockPrice(stock.stock);
+      const comparisonData = await fetchStockComparison(stock.stock, period);
       
-      if (currentPrice !== null) {
+      if (comparisonData) {
+        // Use comparison price if available, otherwise use CSV price
+        const basePrice = comparisonData.comparisonPrice || stock.price;
+        
         // Calculate profit/loss and percentage change
-        const profitLoss = (currentPrice - stock.price) * stock.quantity;
-        const percentChange = ((currentPrice - stock.price) / stock.price) * 100;
+        const profitLoss = (comparisonData.currentPrice - basePrice) * stock.quantity;
+        const percentChange = ((comparisonData.currentPrice - basePrice) / basePrice) * 100;
         
         updatedStocks[index] = {
           ...stock,
-          current_price: currentPrice,
+          current_price: comparisonData.currentPrice,
           profit_loss: profitLoss,
-          percent_change: percentChange
+          percent_change: percentChange,
+          comparison_price: basePrice,
+          comparison_market_value: basePrice * stock.quantity
         };
       } else {
         updatedStocks[index] = {
           ...stock,
-          error: `Failed to fetch price for ${stock.stock}`
+          error: `Failed to fetch data for ${stock.stock}`
         };
       }
       
@@ -98,9 +116,18 @@ export default function Home() {
     try {
       await Promise.all(promises);
     } catch (error) {
-      console.error('Error fetching stock prices:', error);
+      console.error('Error fetching stock comparison data:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Function to handle period change and refetch data
+  const handlePeriodChange = (newPeriod: string) => {
+    if (stocks.length > 0) {
+      setComparisonPeriod(newPeriod);
+      setLoading(true);
+      fetchStockComparisons(stocks, newPeriod);
     }
   };
 
@@ -160,8 +187,8 @@ export default function Home() {
 
         setStocks(stocksData);
         
-        // Fetch current prices for all stocks
-        fetchCurrentPrices(stocksData);
+        // Fetch comparison data for all stocks
+        fetchStockComparisons(stocksData, comparisonPeriod);
       },
       error: (error) => {
         setError("Failed to parse CSV: " + error.message);
@@ -214,11 +241,29 @@ export default function Home() {
             />
 
             <Card className="w-full">
-              <CardHeader>
-                <CardTitle>Portfolio Details</CardTitle>
-                <CardDescription>
-                  {stocks.length} stocks loaded. {loading ? "Fetching current prices..." : "Current prices updated."}
-                </CardDescription>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0">
+                <div>
+                  <CardTitle>Portfolio Details</CardTitle>
+                  <CardDescription>
+                    {stocks.length} stocks loaded. {loading ? "Fetching current prices..." : "Current prices updated."}
+                  </CardDescription>
+                </div>
+                <div className="flex items-center gap-2 mr-2">
+                  <label className="text-sm font-medium">Compare to:</label>
+                  <Select value={comparisonPeriod} onValueChange={handlePeriodChange} disabled={loading}>
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder="Select period" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-background border shadow-md min-w-[200px]">
+                      <SelectItem value="csv" className="pr-8">My Portfolio (CSV)</SelectItem>
+                      <SelectItem value="1w" className="pr-8">1 Week Ago</SelectItem>
+                      <SelectItem value="1mo" className="pr-8">1 Month Ago</SelectItem>
+                      <SelectItem value="3mo" className="pr-8">3 Months Ago</SelectItem>
+                      <SelectItem value="ytd" className="pr-8">Year to Date</SelectItem>
+                      <SelectItem value="1y" className="pr-8">1 Year Ago</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </CardHeader>
             <CardContent>
               <Table>
@@ -226,8 +271,17 @@ export default function Home() {
                   <TableRow>
                     <TableHead>Stock</TableHead>
                     <TableHead>Quantity</TableHead>
-                    <TableHead>Closing Price</TableHead>
-                    <TableHead>Market Value</TableHead>
+                    <TableHead>
+                      {comparisonPeriod === "csv" ? "Purchase Price" : 
+                       comparisonPeriod === "1w" ? "Price 1W Ago" :
+                       comparisonPeriod === "1mo" ? "Price 1M Ago" :
+                       comparisonPeriod === "3mo" ? "Price 3M Ago" :
+                       comparisonPeriod === "ytd" ? "Price YTD Start" :
+                       comparisonPeriod === "1y" ? "Price 1Y Ago" : "Base Price"}
+                    </TableHead>
+                    <TableHead>
+                      {comparisonPeriod === "csv" ? "Market Value" : "Market Value (Base)"}
+                    </TableHead>
                     <TableHead>Current Price</TableHead>
                     <TableHead>Profit/Loss</TableHead>
                     <TableHead>% Change</TableHead>
@@ -242,8 +296,12 @@ export default function Home() {
                     >
                       <TableCell className="font-medium">{stock.stock}</TableCell>
                       <TableCell>{stock.quantity}</TableCell>
-                      <TableCell>${stock.price.toFixed(2)}</TableCell>
-                      <TableCell>${stock.market_value.toFixed(2)}</TableCell>
+                      <TableCell>
+                        ${(stock.comparison_price || stock.price).toFixed(2)}
+                      </TableCell>
+                      <TableCell>
+                        ${(stock.comparison_market_value || stock.market_value).toFixed(2)}
+                      </TableCell>
                       <TableCell>
                         {stock.error ? (
                           <span className="text-destructive text-xs">Error</span>
