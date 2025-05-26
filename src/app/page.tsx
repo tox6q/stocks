@@ -20,6 +20,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import StockChart from "@/components/StockChart";
+import PortfolioTreemap from "@/components/PortfolioTreemap";
 
 // TypeScript interface for stock data
 interface StockData {
@@ -205,20 +206,27 @@ export default function Home() {
         </Card>
 
         {stocks.length > 0 && (
-          <Card className="w-full">
-            <CardHeader>
-              <CardTitle>Portfolio Overview</CardTitle>
-              <CardDescription>
-                {stocks.length} stocks loaded. {loading ? "Fetching current prices..." : "Current prices updated."}
-              </CardDescription>
-            </CardHeader>
+          <>
+            {/* Treemap Visualization */}
+            <PortfolioTreemap 
+              stocks={stocks} 
+              onStockClick={setSelectedStock} 
+            />
+
+            <Card className="w-full">
+              <CardHeader>
+                <CardTitle>Portfolio Details</CardTitle>
+                <CardDescription>
+                  {stocks.length} stocks loaded. {loading ? "Fetching current prices..." : "Current prices updated."}
+                </CardDescription>
+              </CardHeader>
             <CardContent>
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>Stock</TableHead>
                     <TableHead>Quantity</TableHead>
-                    <TableHead>Purchase Price</TableHead>
+                    <TableHead>Closing Price</TableHead>
                     <TableHead>Market Value</TableHead>
                     <TableHead>Current Price</TableHead>
                     <TableHead>Profit/Loss</TableHead>
@@ -273,6 +281,7 @@ export default function Home() {
               </Table>
             </CardContent>
           </Card>
+          </>
         )}
 
         {selectedStock && (
