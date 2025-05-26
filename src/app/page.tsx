@@ -256,6 +256,7 @@ export default function Home() {
                     </SelectTrigger>
                     <SelectContent className="bg-background border shadow-md min-w-[200px]">
                       <SelectItem value="csv" className="pr-8">My Portfolio (CSV)</SelectItem>
+                      <SelectItem value="1d" className="pr-8">1 Day Ago</SelectItem>
                       <SelectItem value="1w" className="pr-8">1 Week Ago</SelectItem>
                       <SelectItem value="1mo" className="pr-8">1 Month Ago</SelectItem>
                       <SelectItem value="3mo" className="pr-8">3 Months Ago</SelectItem>
@@ -273,6 +274,7 @@ export default function Home() {
                     <TableHead>Quantity</TableHead>
                     <TableHead>
                       {comparisonPeriod === "csv" ? "Purchase Price" : 
+                       comparisonPeriod === "1d" ? "Price 1D Ago" :
                        comparisonPeriod === "1w" ? "Price 1W Ago" :
                        comparisonPeriod === "1mo" ? "Price 1M Ago" :
                        comparisonPeriod === "3mo" ? "Price 3M Ago" :

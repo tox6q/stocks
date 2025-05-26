@@ -49,6 +49,7 @@ export async function GET(
 
     // For other periods, fetch historical data to get comparison price
     const ranges = {
+      '1d': '5d',    // Get 5 days to find 1 day ago
       '1w': '1mo',   // Get 1 month to find 1 week ago
       '1mo': '3mo',  // Get 3 months to find 1 month ago  
       '3mo': '1y',   // Get 1 year to find 3 months ago
@@ -102,6 +103,9 @@ export async function GET(
     let targetDate: Date;
     
     switch (period) {
+      case '1d':
+        targetDate = new Date(now.getTime() - 1 * 24 * 60 * 60 * 1000);
+        break;
       case '1w':
         targetDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
         break;
