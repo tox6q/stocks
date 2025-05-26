@@ -19,6 +19,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import StockChart from "@/components/StockChart";
 
 // TypeScript interface for stock data
 interface StockData {
@@ -39,6 +40,7 @@ export default function Home() {
   const [stocks, setStocks] = useState<StockComparison[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>("");
+  const [selectedStock, setSelectedStock] = useState<string | null>(null);
 
   // Function to fetch current stock price using our API route
   const fetchStockPrice = async (ticker: string): Promise<number | null> => {
@@ -225,7 +227,11 @@ export default function Home() {
                 </TableHeader>
                 <TableBody>
                   {stocks.map((stock, index) => (
-                    <TableRow key={index}>
+                    <TableRow 
+                      key={index} 
+                      className="cursor-pointer hover:bg-muted/50"
+                      onClick={() => setSelectedStock(stock.stock)}
+                    >
                       <TableCell className="font-medium">{stock.stock}</TableCell>
                       <TableCell>{stock.quantity}</TableCell>
                       <TableCell>${stock.price.toFixed(2)}</TableCell>
@@ -267,6 +273,15 @@ export default function Home() {
               </Table>
             </CardContent>
           </Card>
+        )}
+
+        {selectedStock && (
+          <div className="w-full">
+            <StockChart 
+              ticker={selectedStock} 
+              onClose={() => setSelectedStock(null)} 
+            />
+          </div>
         )}
       </main>
     </div>
