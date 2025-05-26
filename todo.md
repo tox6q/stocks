@@ -14,24 +14,24 @@ Development
 [x]Define TypeScript interface for stock data: { stock: string; quantity: number; price: number; market_value: number }.
 
 Implement Yahoo Finance API integration:
-[]Write a function to fetch current price for a ticker using fetch from https://query1.finance.yahoo.com/v8/finance/chart/{ticker}.
-[]Extract regularMarketPrice from API response.
-[]Handle errors (e.g., invalid ticker, API rate limits).
+[x]Write a function to fetch current price for a ticker using fetch from https://query1.finance.yahoo.com/v8/finance/chart/{ticker}.
+[x]Extract regularMarketPrice from API response.
+[x]Handle errors (e.g., invalid ticker, API rate limits).
 
 
  Calculate comparison metrics:
-[]Compute profit/loss: (current_price - price) * quantity.
-[]Compute percentage change: ((current_price - price) / price) * 100.
+[x]Compute profit/loss: (current_price - price) * quantity.
+[x]Compute percentage change: ((current_price - price) / price) * 100.
 
 
  Display results:
-[]Use shadcn/ui Table component to show columns: stock, quantity, price, current_price, profit_loss, percent_change.
-[]Add basic error messages for invalid CSV or API failures using shadcn/ui Button for feedback.
+[x]Use shadcn/ui Table component to show columns: stock, quantity, price, current_price, profit_loss, percent_change.
+[x]Add basic error messages for invalid CSV or API failures using shadcn/ui Button for feedback.
 
 Testing
 
  Test CSV parsing:
-[]Create a sample CSV (stocks.csv) with columns: stock,quantity,price,market_value.
+[x]Create a sample CSV (stocks.csv) with columns: stock,quantity,price,market_value.
 []Verify parsing handles valid and invalid CSVs.
 
 

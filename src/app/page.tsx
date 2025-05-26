@@ -40,6 +40,67 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>("");
 
+  // Function to fetch current stock price using our API route
+  const fetchStockPrice = async (ticker: string): Promise<number | null> => {
+    try {
+      const response = await fetch(`/api/stock/${ticker}`);
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      
+      if (data.error) {
+        throw new Error(data.error);
+      }
+      
+      return data.currentPrice;
+    } catch (error) {
+      console.error(`Error fetching price for ${ticker}:`, error);
+      return null;
+    }
+  };
+
+  // Function to fetch current prices for all stocks
+  const fetchCurrentPrices = async (stocksData: StockComparison[]) => {
+    const updatedStocks = [...stocksData];
+    
+    // Process stocks in parallel with a reasonable limit
+    const promises = stocksData.map(async (stock, index) => {
+      const currentPrice = await fetchStockPrice(stock.stock);
+      
+      if (currentPrice !== null) {
+        // Calculate profit/loss and percentage change
+        const profitLoss = (currentPrice - stock.price) * stock.quantity;
+        const percentChange = ((currentPrice - stock.price) / stock.price) * 100;
+        
+        updatedStocks[index] = {
+          ...stock,
+          current_price: currentPrice,
+          profit_loss: profitLoss,
+          percent_change: percentChange
+        };
+      } else {
+        updatedStocks[index] = {
+          ...stock,
+          error: `Failed to fetch price for ${stock.stock}`
+        };
+      }
+      
+      // Update state after each stock is processed for real-time updates
+      setStocks([...updatedStocks]);
+    });
+
+    try {
+      await Promise.all(promises);
+    } catch (error) {
+      console.error('Error fetching stock prices:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -95,9 +156,9 @@ export default function Home() {
         }));
 
         setStocks(stocksData);
-        setLoading(false);
         
-        // TODO: Fetch current prices in next step
+        // Fetch current prices for all stocks
+        fetchCurrentPrices(stocksData);
       },
       error: (error) => {
         setError("Failed to parse CSV: " + error.message);
@@ -146,7 +207,7 @@ export default function Home() {
             <CardHeader>
               <CardTitle>Portfolio Overview</CardTitle>
               <CardDescription>
-                {stocks.length} stocks loaded. Current prices will be fetched next.
+                {stocks.length} stocks loaded. {loading ? "Fetching current prices..." : "Current prices updated."}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -170,21 +231,35 @@ export default function Home() {
                       <TableCell>${stock.price.toFixed(2)}</TableCell>
                       <TableCell>${stock.market_value.toFixed(2)}</TableCell>
                       <TableCell>
-                        {stock.current_price ? `$${stock.current_price.toFixed(2)}` : "Loading..."}
+                        {stock.error ? (
+                          <span className="text-destructive text-xs">Error</span>
+                        ) : stock.current_price ? (
+                          `$${stock.current_price.toFixed(2)}`
+                        ) : (
+                          <span className="text-muted-foreground">Loading...</span>
+                        )}
                       </TableCell>
                       <TableCell>
-                        {stock.profit_loss !== undefined ? (
+                        {stock.error ? (
+                          <span className="text-destructive text-xs">-</span>
+                        ) : stock.profit_loss !== undefined ? (
                           <span className={stock.profit_loss >= 0 ? "text-green-600" : "text-red-600"}>
                             ${stock.profit_loss.toFixed(2)}
                           </span>
-                        ) : "-"}
+                        ) : (
+                          <span className="text-muted-foreground">-</span>
+                        )}
                       </TableCell>
                       <TableCell>
-                        {stock.percent_change !== undefined ? (
+                        {stock.error ? (
+                          <span className="text-destructive text-xs">-</span>
+                        ) : stock.percent_change !== undefined ? (
                           <span className={stock.percent_change >= 0 ? "text-green-600" : "text-red-600"}>
                             {stock.percent_change.toFixed(2)}%
                           </span>
-                        ) : "-"}
+                        ) : (
+                          <span className="text-muted-foreground">-</span>
+                        )}
                       </TableCell>
                     </TableRow>
                   ))}

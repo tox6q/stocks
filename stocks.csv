@@ -1,0 +1,5 @@
+stock,quantity,price,market_value
+AAPL,10.00,150.00,1500.00
+GOOGL,5.00,100.00,500.00
+MSFT,8.00,200.00,1600.00
+TSLA,3.00,250.00,750.00 
