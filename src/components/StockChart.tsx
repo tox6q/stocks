@@ -102,35 +102,35 @@ export default function StockChart({ ticker, onClose }: StockChartProps) {
 
   return (
     <Card className="w-full">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <div>
-          <CardTitle className="text-2xl font-bold">{ticker}</CardTitle>
-          <CardDescription>
-            {loading ? "Loading..." : `${chartData.length} days of price data`}
-          </CardDescription>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+        <div className="flex items-baseline gap-4">
+          <div>
+            <CardTitle className="text-xl font-bold">{ticker}</CardTitle>
+            {!loading && !error && (
+              <div className="text-2xl font-bold mt-1">
+                ${currentPrice.toFixed(2)}
+              </div>
+            )}
+          </div>
+          {!loading && !error && (
+            <div>
+              <div className={`text-sm font-medium ${priceChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                {priceChange >= 0 ? '+' : ''}${priceChange.toFixed(2)} ({percentChange.toFixed(2)}%)
+              </div>
+              <div className={`text-xs ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
+                Period: {isPositive ? '+' : ''}${overallChange.toFixed(2)} ({firstPrice ? ((overallChange / firstPrice) * 100).toFixed(2) : '0.00'}%)
+              </div>
+            </div>
+          )}
         </div>
         <Button variant="outline" size="sm" onClick={onClose}>
           Close
         </Button>
       </CardHeader>
-      
+
       {!loading && !error && (
-        <div className="px-6 pb-4">
-          <div className="flex items-center gap-4 mb-4">
-            <div>
-              <div className="text-3xl font-bold">
-                ${currentPrice.toFixed(2)}
-              </div>
-              <div className={`text-sm ${priceChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                {priceChange >= 0 ? '+' : ''}${priceChange.toFixed(2)} ({percentChange.toFixed(2)}%)
-              </div>
-              <div className={`text-xs mt-1 ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
-                Period: {isPositive ? '+' : ''}${overallChange.toFixed(2)} ({firstPrice ? ((overallChange / firstPrice) * 100).toFixed(2) : '0.00'}%)
-              </div>
-            </div>
-          </div>
-          
-          <div className="flex gap-2 mb-4">
+        <div className="px-6 pb-2">
+          <div className="flex gap-2">
             {[
               { label: "1D", value: "1d" },
               { label: "5D", value: "5d" },
@@ -152,24 +152,26 @@ export default function StockChart({ ticker, onClose }: StockChartProps) {
         </div>
       )}
 
-      <CardContent>
+      <CardContent className="pt-2">
         {loading && (
-          <div className="h-[300px] flex items-center justify-center">
+          <div className="h-[200px] flex items-center justify-center">
             <p className="text-muted-foreground">Loading chart data...</p>
           </div>
         )}
-        
+
         {error && (
-          <div className="h-[300px] flex items-center justify-center">
+          <div className="h-[200px] flex items-center justify-center">
             <p className="text-destructive">{error}</p>
           </div>
         )}
-        
+
         {!loading && !error && chartData.length > 0 && (
-          <ChartContainer config={chartConfig}>
+          <ChartContainer config={chartConfig} className="h-[250px] w-full">
             <AreaChart
               accessibilityLayer
               data={chartData}
+              width="100%"
+              height={250}
               margin={{
                 left: 12,
                 right: 12,
