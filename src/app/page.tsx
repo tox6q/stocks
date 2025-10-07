@@ -33,6 +33,7 @@ import SearchBar from "@/components/SearchBar";
 import StockChart from "@/components/StockChart";
 import CompanyInfo from "@/components/CompanyInfo";
 import NewsFeed from "@/components/NewsFeed";
+import MarketOverview from "@/components/MarketOverview";
 // import PortfolioTreemap from "@/components/PortfolioTreemap"; // Hidden but kept
 import { Trash2, TrendingUp } from "lucide-react";
 
@@ -195,8 +196,10 @@ export default function Home() {
   };
 
   return (
-    <SidebarProvider>
-      <div className="flex min-h-screen w-full">
+    <>
+      <MarketOverview watchlist={watchlist} />
+      <SidebarProvider>
+        <div className="flex min-h-screen w-full">
         {/* Left Sidebar - Watchlist */}
         <Sidebar className="border-r">
           <SidebarHeader className="p-4 border-b">
@@ -339,7 +342,7 @@ export default function Home() {
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {/* Company Info */}
+                    {/* Company Info with Key Statistics */}
                     <CompanyInfo ticker={selectedStock} />
 
                     {/* Stock Chart */}
@@ -361,6 +364,7 @@ export default function Home() {
           )}
         </div>
       </div>
-    </SidebarProvider>
+      </SidebarProvider>
+    </>
   );
 }
